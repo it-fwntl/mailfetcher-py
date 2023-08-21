@@ -106,8 +106,8 @@ try:
             elif "Einsatzende" in filename:  is_closing_mail = True
 
             # Print pdf to local printer
-            if PRINT_ALARM_MAIL & is_alarm_mail: print_pdf(f"{DOWNLOAD_FOLDER}/{filename}", PRINT_ALARM_MAIL_AMOUNT)
-            if PRINT_CLOSING_MAIL & is_closing_mail: print_pdf(f"{DOWNLOAD_FOLDER}/{filename}", PRINT_CLOSING_MAIL_AMOUNT)
+            if IS_READONLY_MODE == False & PRINT_ALARM_MAIL & is_alarm_mail: print_pdf(f"{DOWNLOAD_FOLDER}/{filename}", PRINT_ALARM_MAIL_AMOUNT)
+            if IS_READONLY_MODE == False & PRINT_CLOSING_MAIL & is_closing_mail: print_pdf(f"{DOWNLOAD_FOLDER}/{filename}", PRINT_CLOSING_MAIL_AMOUNT)
             
             # Convert pdf to text
             reader = PdfReader(f"{DOWNLOAD_FOLDER}/{filename}") 
@@ -127,7 +127,7 @@ try:
 
             ortsteil = re.search("Ortsteil\s(.+)", text).group(1)
             adresse = ''
-            if is_alarm_mail: adresse = re.search("Straße\s(.+)Alarmdruck", text).group(1)
+            if is_alarm_mail: adresse = re.search("Straße\s(.+(?=Alarmdruck)|.+)", text).group(1)
             elif is_closing_mail: adresse = re.search("Straße\s(.+)", text).group(1)
             if "A61" in adresse: informations.find('adresse').text = adresse
             else: informations.find('adresse').text = f"{adresse}, {ortsteil}"
