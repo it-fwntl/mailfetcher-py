@@ -1,5 +1,6 @@
-# pip install python-dotenv, Imbox, PyPDF2, pycups, smbprotocol
+# pip install python-dotenv, Imbox, PyPDF2, pycups, smbprotocol, graypy
 import logging
+import graypy
 from dotenv import load_dotenv
 load_dotenv()
 import os
@@ -14,7 +15,6 @@ from logging.handlers import TimedRotatingFileHandler
 
 MAIL_VALIDATION_FROM=os.environ.get("MAIL_VALIDATION_FROM")
 MAIL_VALIDATION_SUBJECT=os.environ.get("MAIL_VALIDATION_SUBJECT")
-
 MAIL_ACCOUNT_HOST = os.environ.get("MAIL_ACCOUNT_HOST")
 MAIL_ACCOUNT_USER = os.environ.get("MAIL_ACCOUNT_USER")
 MAIL_ACCOUNT_PASSWORD = os.environ.get("MAIL_ACCOUNT_PASSWORD")
@@ -23,11 +23,13 @@ PRINT_ALARM_MAIL = os.environ.get("PRINT_ALARM_MAIL") == "true"
 PRINT_ALARM_MAIL_AMOUNT = os.environ.get("PRINT_ALARM_MAIL_AMOUNT")
 PRINT_CLOSING_MAIL = os.environ.get("PRINT_CLOSING_MAIL") == "true"
 PRINT_CLOSING_MAIL_AMOUNT = os.environ.get("PRINT_CLOSING_MAIL_AMOUNT")
+GRAYLOG_HOST = os.environ.get("GRAYLOG_HOST")
 SMB_HOST = os.environ.get("SMB_HOST")
 SMB_USERNAME = os.environ.get("SMB_USERNAME")
 SMB_PASSWORD = os.environ.get("SMB_PASSWORD")
 SMB_FOLDER_NAME = os.environ.get("SMB_FOLDER_NAME")
 VEHICLES = os.environ.get("VEHICLES").split(";")
+IS_READONLY_MODE = os.environ.get("IS_READONLY_MODE") == "1"
 
 FOLDER_DIR = os.path.dirname(os.path.realpath(__file__))
 DOWNLOAD_FOLDER = f"{FOLDER_DIR}/temp"
@@ -66,11 +68,8 @@ def save_xml_remote(file):
 # Create logging instance
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s')
-logHandler = TimedRotatingFileHandler(f'{FOLDER_DIR}/print-alarm-mail.log', when="midnight", backupCount=7)
-logHandler.setLevel(logging.INFO)
-logHandler.setFormatter(formatter)
-logger.addHandler(logHandler)
+handler = graypy.GELFTCPHandler(GRAYLOG_HOST, 12201)
+logger.addHandler(handler)
 
 # Create temp folder to store mail attachments
 if not os.path.isdir(DOWNLOAD_FOLDER):
@@ -84,7 +83,7 @@ messages = mail.messages(unread=True, sent_from=MAIL_VALIDATION_FROM, subject=MA
 # Load unread mails an store attachments ended with .pdf
 for (uid, message) in messages:
     logger.info(f'Mark mail as seen {uid}')
-    mail.mark_seen(uid)
+    if IS_READONLY_MODE == False: mail.mark_seen(uid)
     for idx, attachment in enumerate(message.attachments):
         try:
             att_fn = attachment.get('filename')
@@ -113,6 +112,7 @@ try:
             # Convert pdf to text
             reader = PdfReader(f"{DOWNLOAD_FOLDER}/{filename}") 
             text = reader.pages[0].extract_text()
+            logger.info(text)
             
             # Gather and store informations from alarm mail
             nummer = re.search("(Alarmdruck|Abschlussbericht)\s+([\d]+)", text).group(2)
@@ -151,7 +151,8 @@ try:
                         root.find('sds').find(f"fzg{index+1}").find('einsatzbereitAufWache').text = time_row[8].replace("*", "").replace("--:--:--","")
             
             tree.write(f"{DOWNLOAD_FOLDER}/einsatzdaten_{nummer}.xml", encoding='utf-8', xml_declaration=True)
-            save_xml_remote(f"einsatzdaten_{nummer}.xml")
+            logger.info(ET.tostring(root, encoding='unicode'))
+            if IS_READONLY_MODE == False: save_xml_remote(f"einsatzdaten_{nummer}.xml")
             os.remove(f"{DOWNLOAD_FOLDER}/einsatzdaten_{nummer}.xml")
             os.remove(f"{DOWNLOAD_FOLDER}/{filename}")
 except Exception as e:
