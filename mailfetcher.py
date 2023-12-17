@@ -116,7 +116,6 @@ try:
             
             # Gather and store informations from alarm mail
             nummer = re.search("(Alarmdruck|Abschlussbericht)\s+([\d]+)", text).group(2)
-            print(nummer)
             xml_file = load_remote_xml(nummer)
             tree, root = load_xml(xml_file)
             informations = root.find('informationen')
