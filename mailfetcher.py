@@ -106,8 +106,8 @@ try:
             elif "Einsatzende" in filename:  is_closing_mail = True
 
             # Print pdf to local printer
-            if IS_READONLY_MODE == False & PRINT_ALARM_MAIL & is_alarm_mail: print_pdf(f"{DOWNLOAD_FOLDER}/{filename}", PRINT_ALARM_MAIL_AMOUNT)
-            if IS_READONLY_MODE == False & PRINT_CLOSING_MAIL & is_closing_mail: print_pdf(f"{DOWNLOAD_FOLDER}/{filename}", PRINT_CLOSING_MAIL_AMOUNT)
+            if IS_READONLY_MODE == False and PRINT_ALARM_MAIL and is_alarm_mail: print_pdf(f"{DOWNLOAD_FOLDER}/{filename}", PRINT_ALARM_MAIL_AMOUNT)
+            if IS_READONLY_MODE == False and PRINT_CLOSING_MAIL and is_closing_mail: print_pdf(f"{DOWNLOAD_FOLDER}/{filename}", PRINT_CLOSING_MAIL_AMOUNT)
             
             # Convert pdf to text
             reader = PdfReader(f"{DOWNLOAD_FOLDER}/{filename}") 
