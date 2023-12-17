@@ -106,8 +106,8 @@ try:
             elif "Einsatzende" in filename:  is_closing_mail = True
 
             # Print pdf to local printer
-            if IS_READONLY_MODE == False & PRINT_ALARM_MAIL & is_alarm_mail: print_pdf(f"{DOWNLOAD_FOLDER}/{filename}", PRINT_ALARM_MAIL_AMOUNT)
-            if IS_READONLY_MODE == False & PRINT_CLOSING_MAIL & is_closing_mail: print_pdf(f"{DOWNLOAD_FOLDER}/{filename}", PRINT_CLOSING_MAIL_AMOUNT)
+            if IS_READONLY_MODE == False and PRINT_ALARM_MAIL and is_alarm_mail: print_pdf(f"{DOWNLOAD_FOLDER}/{filename}", PRINT_ALARM_MAIL_AMOUNT)
+            if IS_READONLY_MODE == False and PRINT_CLOSING_MAIL and is_closing_mail: print_pdf(f"{DOWNLOAD_FOLDER}/{filename}", PRINT_CLOSING_MAIL_AMOUNT)
             
             # Convert pdf to text
             reader = PdfReader(f"{DOWNLOAD_FOLDER}/{filename}") 
@@ -116,6 +116,7 @@ try:
             
             # Gather and store informations from alarm mail
             nummer = re.search("(Alarmdruck|Abschlussbericht)\s+([\d]+)", text).group(2)
+            print(nummer)
             xml_file = load_remote_xml(nummer)
             tree, root = load_xml(xml_file)
             informations = root.find('informationen')
